@@ -7,11 +7,14 @@
   "scripts": {
     "dev": "vitepress dev",
     "build": "vitepress build",
-    "preview": "vitepress preview"
+    "preview": "vitepress preview",
+    "deploy": "bash scripts/deploy.sh",
+    "deploy:dry": "bash scripts/deploy.sh --dry-run"
   },
   "devDependencies": {
     "vitepress": "^1.6.0",
-    "vue": "^3.5.0"
+    "vue": "^3.5.0",
+    "wrangler": "^4.90.0"
   },
   "dependencies": {
     "@appzgatenz/label-print-topbridge-js": "^0.2.0"

@@ -34,6 +34,10 @@ coverage/
 *.sln
 *.sw?
 
+# VitePress
+.vitepress/cache
+.vitepress/dist
+
 ############################
 # AI Rules
 ############################
@@ -56,10 +60,8 @@ AGENTS.md
 
 .tmp/
 docs/specs/*
-
+docs/archived/*
 .gitnexus
 
 .code-review-graph/
-# VitePress
-.vitepress/cache
-.vitepress/dist
+

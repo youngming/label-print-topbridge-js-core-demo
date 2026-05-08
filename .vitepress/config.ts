@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
+  srcExclude: ['AGENTS.md', 'CLAUDE.md'],
   head: [
     ['script', {}, `
       (function() {
