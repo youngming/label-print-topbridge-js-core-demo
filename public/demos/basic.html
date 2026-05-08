@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopBridge SDK — Integration Test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    h1 { color: #333; }
+    .section { margin: 20px 0; padding: 16px; border: 1px solid #ddd; border-radius: 8px; }
+    button { padding: 8px 16px; margin: 4px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+    button:hover { background: #f0f0f0; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #log { background: #1a1a1a; color: #0f0; padding: 16px; border-radius: 8px; font-family: monospace;
+           font-size: 13px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+    input, select { padding: 6px 10px; margin: 4px; border: 1px solid #ccc; border-radius: 4px; }
+    label { display: inline-block; width: 80px; }
+  </style>
+</head>
+<body>
+  <h1>TopBridge SDK Integration Test</h1>
+
+  <div class="section">
+    <h2>1. Preflight Check</h2>
+    <button id="btn-preflight" onclick="runPreflight()">Run Preflight</button>
+  </div>
+
+  <div class="section">
+    <h2>2. Print</h2>
+    <div>
+      <label>Template:</label>
+      <select id="template-select"><option value="">-- run preflight first --</option></select>
+    </div>
+    <div>
+      <label>Printer:</label>
+      <select id="printer-select"><option value="">-- run preflight first --</option></select>
+    </div>
+    <div>
+      <label>Name:</label> <input id="input-name" value="Test Product">
+    </div>
+    <div>
+      <label>Price:</label> <input id="input-price" value="3.99" type="number">
+      <label>Currency:</label> <input id="input-currency" value="$" style="width:40px">
+      <label>Unit:</label> <input id="input-unit" value="/kg">
+    </div>
+    <div>
+      <label>Copies:</label> <input id="input-copies" value="1" type="number" min="1" max="9999">
+    </div>
+    <button id="btn-print" onclick="runPrint()" disabled>Print</button>
+  </div>
+
+  <div class="section">
+    <h2>Log</h2>
+    <div id="log"></div>
+  </div>
+
+  <script type="module">
+    const { TopBridgeClient } = await import('https://esm.sh/@appzgatenz/label-print-topbridge-js')
+
+    let client
+    let preflightResult
+
+    client = new TopBridgeClient({ debug: true })
+    log('✓ TopBridgeClient initialized')
+
+    window.runPreflight = async () => {
+      const btn = document.getElementById('btn-preflight')
+      btn.disabled = true
+      btn.textContent = 'Checking...'
+      log('--- Running preflight ---')
+
+      try {
+        preflightResult = await client.launch.ensureRunning(
+          () => client.preflight.run({
+            onStepChange: (step) => log(`  Step: ${step}...`)
+          }),
+          { onLaunching: () => log('  Launching TopBridge...') }
+        )
+
+        log('✓ Preflight passed')
+        log(`  Health: isLoggedIn=${preflightResult.health.data?.isLoggedIn}`)
+        log(`  Benefits: isValid=${preflightResult.benefits.data?.isValid}, remaining=${preflightResult.benefits.data?.remainingPrints}`)
+        log(`  Printers: ${preflightResult.printers.data?.count} available, default: ${preflightResult.printers.data?.defaultPrinter}`)
+
+        // Populate printer select
+        const printerSelect = document.getElementById('printer-select')
+        printerSelect.innerHTML = ''
+        for (const p of preflightResult.printers.data?.printers ?? []) {
+          const opt = document.createElement('option')
+          opt.value = p.name
+          opt.textContent = p.name + (p.isDefault ? ' (default)' : '')
+          printerSelect.appendChild(opt)
+        }
+
+        // Fetch templates
+        try {
+          const templates = await client.templates.list()
+          const templateSelect = document.getElementById('template-select')
+          templateSelect.innerHTML = ''
+          for (const t of templates.data.templates ?? []) {
+            const opt = document.createElement('option')
+            opt.value = t.code || t.id
+            opt.textContent = t.name
+            templateSelect.appendChild(opt)
+          }
+        } catch (err) {
+          log('  Templates: ' + err.message)
+        }
+
+        document.getElementById('btn-print').disabled = false
+      } catch (err) {
+        log('✗ Preflight failed: ' + err.message)
+        if (err.storeUrl) log('  Update: ' + err.storeUrl)
+        if (err.downloadUrl) log('  Download: ' + err.downloadUrl)
+      } finally {
+        btn.disabled = false
+        btn.textContent = 'Run Preflight'
+      }
+    }
+
+    window.runPrint = async () => {
+      const btn = document.getElementById('btn-print')
+      btn.disabled = true
+      btn.textContent = 'Printing...'
+      log('--- Sending print job ---')
+
+      const template = document.getElementById('template-select').value
+      const printer = document.getElementById('printer-select').value
+      const name = document.getElementById('input-name').value
+      const price = parseFloat(document.getElementById('input-price').value)
+      const currency = document.getElementById('input-currency').value
+      const unit = document.getElementById('input-unit').value
+      const copies = parseInt(document.getElementById('input-copies').value) || 1
+
+      try {
+        const result = await client.print.execute({
+          template,
+          printer,
+          products: [{ name, price, currency, unit, copies }],
+          fieldTypes: { price: 'price' },
+        })
+
+        log('✓ Print successful')
+        log(`  Copies: ${result.data.printedCopies}`)
+        log(`  Template: ${result.data.templateName}`)
+        if (result.details) log(`  Engine: ${result.details.renderEngine}, Time: ${result.details.elapsedTime}`)
+      } catch (err) {
+        log('✗ Print failed: ' + err.message)
+      } finally {
+        btn.disabled = false
+        btn.textContent = 'Print'
+      }
+    }
+
+    function log(msg) {
+      const el = document.getElementById('log')
+      const time = new Date().toLocaleTimeString()
+      el.textContent += `[${time}] ${msg}\n`
+      el.scrollTop = el.scrollHeight
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopBridge SDK — 模板查询示例</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    h1 { color: #333; }
+    .section { margin: 20px 0; padding: 16px; border: 1px solid #ddd; border-radius: 8px; }
+    button { padding: 8px 16px; margin: 4px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+    button:hover { background: #f0f0f0; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #log { background: #1a1a1a; color: #0f0; padding: 16px; border-radius: 8px; font-family: monospace;
+           font-size: 13px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f5f5f5; }
+  </style>
+</head>
+<body>
+  <h1>模板查询示例</h1>
+  <p>演示 templates.list() 和 templates.schema() 的使用。</p>
+
+  <div class="section">
+    <h2>1. 获取模板列表</h2>
+    <button id="btn-list" onclick="listTemplates()">获取模板列表</button>
+    <div id="template-table"></div>
+  </div>
+
+  <div class="section">
+    <h2>2. 查询模板字段定义</h2>
+    <select id="schema-select"><option value="">-- 先获取模板列表 --</option></select>
+    <button id="btn-schema" onclick="querySchema()" disabled>查询字段定义</button>
+    <div id="schema-table"></div>
+  </div>
+
+  <div class="section">
+    <h2>日志</h2>
+    <div id="log"></div>
+  </div>
+
+  <script type="module">
+    const { TopBridgeClient } = await import('https://esm.sh/@appzgatenz/label-print-topbridge-js')
+
+    const client = new TopBridgeClient({ debug: true })
+
+    function log(msg) {
+      const el = document.getElementById('log')
+      const time = new Date().toLocaleTimeString()
+      el.textContent += `[${time}] ${msg}\n`
+      el.scrollTop = el.scrollHeight
+    }
+
+    window.listTemplates = async () => {
+      const btn = document.getElementById('btn-list')
+      btn.disabled = true
+      btn.textContent = '获取中...'
+      log('--- 获取模板列表 ---')
+
+      try {
+        const result = await client.templates.list()
+        log(`✓ 获取到 ${result.data.count} 个模板`)
+
+        const table = document.getElementById('template-table')
+        if (result.data.templates?.length) {
+          let html = '<table><tr><th>ID</th><th>Code</th><th>名称</th><th>状态</th></tr>'
+          for (const t of result.data.templates) {
+            html += `<tr><td>${t.id}</td><td>${t.code || '-'}</td><td>${t.name}</td><td>${t.isEnabled ? '✓' : '✗'}</td></tr>`
+          }
+          html += '</table>'
+          table.innerHTML = html
+
+          const select = document.getElementById('schema-select')
+          select.innerHTML = ''
+          for (const t of result.data.templates) {
+            const opt = document.createElement('option')
+            opt.value = t.code || t.id
+            opt.textContent = t.name
+            select.appendChild(opt)
+          }
+          document.getElementById('btn-schema').disabled = false
+        }
+      } catch (err) {
+        log(`✗ 失败: ${err.message}`)
+      } finally {
+        btn.disabled = false
+        btn.textContent = '获取模板列表'
+      }
+    }
+
+    window.querySchema = async () => {
+      const template = document.getElementById('schema-select').value
+      if (!template) return
+
+      const btn = document.getElementById('btn-schema')
+      btn.disabled = true
+      btn.textContent = '查询中...'
+      log(`--- 查询模板字段: ${template} ---`)
+
+      try {
+        const schema = await client.templates.schema(template)
+        log(`✓ 模板: ${schema.data.name} (${schema.data.code})`)
+        log(`  字段数量: ${schema.data.fields?.length ?? 0}`)
+
+        const table = document.getElementById('schema-table')
+        if (schema.data.fields?.length) {
+          let html = '<table><tr><th>字段名</th><th>类型</th><th>必填</th><th>默认值</th></tr>'
+          for (const f of schema.data.fields) {
+            html += `<tr><td>${f.name}</td><td>${f.type}</td><td>${f.required ? '✓' : '✗'}</td><td>${f.default ?? '-'}</td></tr>`
+          }
+          html += '</table>'
+          table.innerHTML = html
+        }
+      } catch (err) {
+        log(`✗ 失败: ${err.message}`)
+      } finally {
+        btn.disabled = false
+        btn.textContent = '查询字段定义'
+      }
+    }
+  </script>
+</body>
+</html>

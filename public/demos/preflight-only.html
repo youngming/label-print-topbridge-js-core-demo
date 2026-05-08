@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopBridge SDK — 预检示例</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    h1 { color: #333; }
+    .section { margin: 20px 0; padding: 16px; border: 1px solid #ddd; border-radius: 8px; }
+    button { padding: 8px 16px; margin: 4px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+    button:hover { background: #f0f0f0; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #log { background: #1a1a1a; color: #0f0; padding: 16px; border-radius: 8px; font-family: monospace;
+           font-size: 13px; max-height: 500px; overflow-y: auto; white-space: pre-wrap; }
+    .result { background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 8px; }
+    .result h3 { margin: 0 0 8px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>预检示例</h1>
+  <p>仅运行 preflight，不执行打印。演示健康检查、权益验证和打印机获取的详细输出。</p>
+
+  <div class="section">
+    <h2>运行预检</h2>
+    <button id="btn-preflight" onclick="runPreflight()">运行完整预检</button>
+    <button onclick="runHealthOnly()">仅健康检查</button>
+    <div id="results"></div>
+  </div>
+
+  <div class="section">
+    <h2>日志</h2>
+    <div id="log"></div>
+  </div>
+
+  <script type="module">
+    const { TopBridgeClient } = await import('https://esm.sh/@appzgatenz/label-print-topbridge-js')
+
+    const client = new TopBridgeClient({ debug: true })
+
+    function log(msg) {
+      const el = document.getElementById('log')
+      const time = new Date().toLocaleTimeString()
+      el.textContent += `[${time}] ${msg}\n`
+      el.scrollTop = el.scrollHeight
+    }
+
+    window.runPreflight = async () => {
+      const btn = document.getElementById('btn-preflight')
+      btn.disabled = true
+      log('--- 运行完整预检 ---')
+
+      try {
+        const result = await client.preflight.run({
+          onStepChange: (step) => log(`  → ${step}...`)
+        })
+
+        log('✓ 预检通过')
+
+        let html = ''
+
+        // Health
+        html += '<div class="result"><h3>健康检查</h3><table>'
+        html += `<tr><td>运行状态</td><td>${result.health.isRunning ? '✓ 运行中' : '✗ 未运行'}</td></tr>`
+        html += `<tr><td>登录状态</td><td>${result.health.data?.isLoggedIn ? '✓ 已登录' : '✗ 未登录'}</td></tr>`
+        if (result.health.data?.version) html += `<tr><td>版本</td><td>${result.health.data.version}</td></tr>`
+        if (result.health.data?.networkStatus) html += `<tr><td>网络</td><td>${result.health.data.networkStatus}</td></tr>`
+        html += '</table></div>'
+
+        // Benefits
+        html += '<div class="result"><h3>权益验证</h3><table>'
+        html += `<tr><td>有效</td><td>${result.benefits.data?.isValid ? '✓' : '✗'}</td></tr>`
+        html += `<tr><td>剩余配额</td><td>${result.benefits.data?.remainingPrints ?? 'N/A'}</td></tr>`
+        if (result.benefits.data?.expiresAt) html += `<tr><td>过期时间</td><td>${result.benefits.data.expiresAt}</td></tr>`
+        html += `<tr><td>打印权益</td><td>${result.benefits.data?.hasPrintBenefit ? '✓' : '✗'}</td></tr>`
+        html += '</table></div>'
+
+        // Printers
+        html += '<div class="result"><h3>打印机</h3><table>'
+        html += `<tr><td>数量</td><td>${result.printers.data?.count ?? 0}</td></tr>`
+        html += `<tr><td>默认打印机</td><td>${result.printers.data?.defaultPrinter ?? '无'}</td></tr>`
+        html += '</table>'
+        if (result.printers.data?.printers?.length) {
+          html += '<table><tr><th>名称</th><th>默认</th><th>协议</th></tr>'
+          for (const p of result.printers.data.printers) {
+            html += `<tr><td>${p.name}</td><td>${p.isDefault ? '✓' : ''}</td><td>${p.protocol || '-'}</td></tr>`
+          }
+          html += '</table>'
+        }
+        html += '</div>'
+
+        document.getElementById('results').innerHTML = html
+      } catch (err) {
+        log(`✗ 预检失败: ${err.constructor.name}: ${err.message}`)
+        document.getElementById('results').innerHTML = `<div class="result"><p style="color:red">${err.constructor.name}: ${err.message}</p></div>`
+      } finally {
+        btn.disabled = false
+      }
+    }
+
+    window.runHealthOnly = async () => {
+      log('--- 仅健康检查 ---')
+      try {
+        const health = await client.health.check()
+        log(`✓ Tray App ${health.isRunning ? '运行中' : '未运行'}`)
+        if (health.data?.isLoggedIn !== undefined) {
+          log(`  登录: ${health.data.isLoggedIn ? '是' : '否'}`)
+        }
+        if (health.data?.version) log(`  版本: ${health.data.version}`)
+      } catch (err) {
+        log(`✗ 健康检查失败: ${err.message}`)
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopBridge SDK — 错误处理示例</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    h1 { color: #333; }
+    .section { margin: 20px 0; padding: 16px; border: 1px solid #ddd; border-radius: 8px; }
+    button { padding: 8px 16px; margin: 4px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+    button:hover { background: #f0f0f0; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #log { background: #1a1a1a; color: #0f0; padding: 16px; border-radius: 8px; font-family: monospace;
+           font-size: 13px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>错误处理示例</h1>
+  <p>演示 SDK 错误类型和 <code>instanceof</code> 类型窄化。</p>
+
+  <div class="section">
+    <h2>1. 预检错误处理</h2>
+    <button onclick="runPreflightWithErrorHandling()">运行预检（含错误处理）</button>
+  </div>
+
+  <div class="section">
+    <h2>2. 打印验证错误</h2>
+    <button onclick="runPrintWithEmptyProducts()">空产品列表（触发 ValidationError）</button>
+  </div>
+
+  <div class="section">
+    <h2>日志</h2>
+    <div id="log"></div>
+  </div>
+
+  <script type="module">
+    const {
+      TopBridgeClient,
+      TopBridgeConnectionError,
+      TopBridgeAuthError,
+      TopBridgeQuotaError,
+      TopBridgePrintError,
+      TopBridgeValidationError,
+      TopBridgePrinterError,
+      TopBridgeTemplateError,
+      TopBridgeNetworkError,
+      TopBridgeSourceError,
+    } = await import('https://esm.sh/@appzgatenz/label-print-topbridge-js')
+
+    function log(msg) {
+      const el = document.getElementById('log')
+      const time = new Date().toLocaleTimeString()
+      el.textContent += `[${time}] ${msg}\n`
+      el.scrollTop = el.scrollHeight
+    }
+
+    function logError(err) {
+      log(`  ❌ ${err.constructor.name}: ${err.message}`)
+      if (err.code) log(`     code: ${err.code}`)
+      if (err.field) log(`     field: ${err.field}`)
+      if (err.reason) log(`     reason: ${err.reason}`)
+      if (err.storeUrl) log(`     storeUrl: ${err.storeUrl}`)
+    }
+
+    window.runPreflightWithErrorHandling = async () => {
+      log('--- 运行预检（含完整错误处理）---')
+      const client = new TopBridgeClient({ debug: true })
+
+      try {
+        const preflight = await client.preflight.run({
+          onStepChange: (step) => log(`  Step: ${step}...`)
+        })
+        log('✓ 预检通过')
+        log(`  打印机: ${preflight.printers.data?.defaultPrinter}`)
+      } catch (err) {
+        if (err instanceof TopBridgeConnectionError) {
+          logError(err)
+          log('  💡 建议: 确认 TopBridge 桌面应用已启动')
+        } else if (err instanceof TopBridgeAuthError) {
+          logError(err)
+          if (err.code === 'UPDATE_REQUIRED') {
+            log('  💡 建议: 请更新 TopBridge')
+            if (err.storeUrl) log(`  更新链接: ${err.storeUrl}`)
+          } else {
+            log('  💡 建议: 请先登录 TopBridge 桌面应用')
+          }
+        } else if (err instanceof TopBridgeQuotaError) {
+          logError(err)
+          log('  💡 建议: 打印配额不足，请联系管理员')
+        } else if (err instanceof TopBridgePrinterError) {
+          logError(err)
+          log('  💡 建议: 请检查打印机是否在线并已配置协议（TSPL/ZPL）')
+        } else {
+          logError(err)
+        }
+      }
+    }
+
+    window.runPrintWithEmptyProducts = async () => {
+      log('--- 空产品列表测试 ---')
+      const client = new TopBridgeClient()
+
+      try {
+        await client.print.execute({
+          template: 'PRICE_LABEL',
+          printer: 'Test',
+          products: [],
+        })
+      } catch (err) {
+        if (err instanceof TopBridgeValidationError) {
+          logError(err)
+          log('  💡 验证失败: products 不能为空数组')
+        } else {
+          logError(err)
+        }
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopBridge SDK — 批量打印示例</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    h1 { color: #333; }
+    .section { margin: 20px 0; padding: 16px; border: 1px solid #ddd; border-radius: 8px; }
+    button { padding: 8px 16px; margin: 4px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+    button:hover { background: #f0f0f0; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #log { background: #1a1a1a; color: #0f0; padding: 16px; border-radius: 8px; font-family: monospace;
+           font-size: 13px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f5f5f5; }
+    input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; width: 80px; }
+    .product-row { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
+    .product-row input { width: auto; }
+  </style>
+</head>
+<body>
+  <h1>批量打印示例</h1>
+  <p>演示一次打印多个产品，每个产品不同份数。</p>
+
+  <div class="section">
+    <h2>1. 预检</h2>
+    <button id="btn-preflight" onclick="runPreflight()">运行预检</button>
+    <span id="preflight-status"></span>
+  </div>
+
+  <div class="section">
+    <h2>2. 产品列表</h2>
+    <div id="product-list">
+      <div class="product-row">
+        <input class="p-name" value="Apple" placeholder="名称" style="width:120px">
+        <input class="p-price" value="3.99" type="number" step="0.01" placeholder="价格">
+        <input class="p-currency" value="$" style="width:40px" placeholder="币种">
+        <input class="p-unit" value="/kg" style="width:60px" placeholder="单位">
+        <input class="p-copies" value="2" type="number" min="1" max="9999" style="width:60px" placeholder="份数">
+      </div>
+      <div class="product-row">
+        <input class="p-name" value="Banana" placeholder="名称" style="width:120px">
+        <input class="p-price" value="1.99" type="number" step="0.01" placeholder="价格">
+        <input class="p-currency" value="$" style="width:40px" placeholder="币种">
+        <input class="p-unit" value="/lb" style="width:60px" placeholder="单位">
+        <input class="p-copies" value="1" type="number" min="1" max="9999" style="width:60px" placeholder="份数">
+      </div>
+      <div class="product-row">
+        <input class="p-name" value="Orange" placeholder="名称" style="width:120px">
+        <input class="p-price" value="4.50" type="number" step="0.01" placeholder="价格">
+        <input class="p-currency" value="$" style="width:40px" placeholder="币种">
+        <input class="p-unit" value="/kg" style="width:60px" placeholder="单位">
+        <input class="p-copies" value="3" type="number" min="1" max="9999" style="width:60px" placeholder="份数">
+      </div>
+    </div>
+    <div style="margin-top:8px">
+      <select id="template-select"><option value="">-- 先预检 --</option></select>
+      <select id="printer-select"><option value="">-- 先预检 --</option></select>
+    </div>
+    <button id="btn-print" onclick="runPrint()" disabled>批量打印</button>
+  </div>
+
+  <div class="section">
+    <h2>日志</h2>
+    <div id="log"></div>
+  </div>
+
+  <script type="module">
+    const { TopBridgeClient } = await import('https://esm.sh/@appzgatenz/label-print-topbridge-js')
+
+    const client = new TopBridgeClient({ debug: true })
+    let preflightResult
+
+    function log(msg) {
+      const el = document.getElementById('log')
+      const time = new Date().toLocaleTimeString()
+      el.textContent += `[${time}] ${msg}\n`
+      el.scrollTop = el.scrollHeight
+    }
+
+    window.runPreflight = async () => {
+      const btn = document.getElementById('btn-preflight')
+      btn.disabled = true
+      btn.textContent = '检查中...'
+      log('--- 运行预检 ---')
+
+      try {
+        preflightResult = await client.preflight.run({
+          onStepChange: (step) => log(`  Step: ${step}...`)
+        })
+
+        log('✓ 预检通过')
+        document.getElementById('preflight-status').textContent = '✓ 就绪'
+
+        const printerSelect = document.getElementById('printer-select')
+        printerSelect.innerHTML = ''
+        for (const p of preflightResult.printers.data.printers ?? []) {
+          const opt = document.createElement('option')
+          opt.value = p.name
+          opt.textContent = p.name + (p.isDefault ? ' (默认)' : '')
+          if (p.isDefault) opt.selected = true
+          printerSelect.appendChild(opt)
+        }
+
+        const templates = await client.templates.list()
+        const templateSelect = document.getElementById('template-select')
+        templateSelect.innerHTML = ''
+        for (const t of templates.data.templates ?? []) {
+          const opt = document.createElement('option')
+          opt.value = t.code || t.id
+          opt.textContent = t.name
+          templateSelect.appendChild(opt)
+        }
+
+        document.getElementById('btn-print').disabled = false
+      } catch (err) {
+        log(`✗ 预检失败: ${err.message}`)
+        document.getElementById('preflight-status').textContent = '✗ 失败'
+      } finally {
+        btn.disabled = false
+        btn.textContent = '运行预检'
+      }
+    }
+
+    window.runPrint = async () => {
+      const btn = document.getElementById('btn-print')
+      btn.disabled = true
+      btn.textContent = '打印中...'
+
+      const rows = document.querySelectorAll('.product-row')
+      const products = []
+      rows.forEach(row => {
+        const name = row.querySelector('.p-name').value
+        const price = parseFloat(row.querySelector('.p-price').value)
+        const currency = row.querySelector('.p-currency').value
+        const unit = row.querySelector('.p-unit').value
+        const copies = parseInt(row.querySelector('.p-copies').value) || 1
+        if (name) products.push({ name, price, currency, unit, copies })
+      })
+
+      const template = document.getElementById('template-select').value
+      const printer = document.getElementById('printer-select').value
+
+      log(`--- 批量打印 ${products.length} 个产品 ---`)
+
+      try {
+        const result = await client.print.execute({
+          template,
+          printer,
+          products,
+          fieldTypes: { price: 'price' },
+        })
+
+        log(`✓ 打印成功`)
+        log(`  总份数: ${result.data.printedCopies}`)
+        log(`  模板: ${result.data.templateName}`)
+        log(`  Job ID: ${result.data.jobId}`)
+
+        if (result.warnings?.length) {
+          log('  警告:')
+          for (const w of result.warnings) {
+            log(`    [${w.code}:${w.reason}] ${w.message}`)
+          }
+        }
+      } catch (err) {
+        log(`✗ 打印失败: ${err.message}`)
+      } finally {
+        btn.disabled = false
+        btn.textContent = '批量打印'
+      }
+    }
+  </script>
+</body>
+</html>
