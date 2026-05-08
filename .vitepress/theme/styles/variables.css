@@ -1,0 +1,64 @@
+/* Geist — Vercel 的几何技术感字体 */
+@font-face {
+  font-family: 'Geist';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Variable.woff2')
+    format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0020-007E;
+}
+
+:root {
+  /* VitePress 品牌色覆盖 — 深青(teal) */
+  --vp-c-brand-1: hsl(168, 72%, 28%);
+  --vp-c-brand-2: hsl(168, 68%, 38%);
+  --vp-c-brand-3: hsl(168, 65%, 42%);
+  --vp-c-brand-soft: hsla(168, 72%, 40%, 0.12);
+
+  /* TopBridge 设计令牌 */
+  --tb-font-display: 'Geist', system-ui, -apple-system, sans-serif;
+  --tb-accent: hsl(36, 92%, 50%);
+  --tb-accent-soft: hsla(36, 92%, 50%, 0.12);
+
+  --tb-bg-primary: #fafbfc;
+  --tb-bg-secondary: #f0f2f5;
+  --tb-bg-card: #ffffff;
+
+  --tb-text-primary: #111827;
+  --tb-text-secondary: #4b5563;
+  --tb-text-tertiary: #9ca3af;
+
+  --tb-border: #e5e7eb;
+  --tb-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --tb-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --tb-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  --tb-hero-gradient-start: hsl(168, 30%, 96%);
+  --tb-hero-gradient-end: hsl(220, 20%, 94%);
+}
+
+.dark {
+  --vp-c-brand-1: hsl(168, 80%, 60%);
+  --vp-c-brand-2: hsl(168, 72%, 50%);
+  --vp-c-brand-3: hsl(168, 65%, 42%);
+  --vp-c-brand-soft: hsla(168, 80%, 50%, 0.14);
+
+  --tb-accent: hsl(36, 95%, 60%);
+  --tb-accent-soft: hsla(36, 95%, 60%, 0.14);
+
+  --tb-bg-primary: #0d1117;
+  --tb-bg-secondary: #161b22;
+  --tb-bg-card: #1c2128;
+
+  --tb-text-primary: #e6edf3;
+  --tb-text-secondary: #8b949e;
+  --tb-text-tertiary: #484f58;
+
+  --tb-border: #30363d;
+  --tb-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --tb-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --tb-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  --tb-hero-gradient-start: hsl(168, 25%, 8%);
+  --tb-hero-gradient-end: hsl(220, 25%, 6%);
+}

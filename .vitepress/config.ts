@@ -3,6 +3,8 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   srcExclude: ['AGENTS.md', 'CLAUDE.md'],
   head: [
+    ['link', { rel: 'preconnect', href: 'https://cdn.jsdelivr.net' }],
+    ['link', { rel: 'dns-prefetch', href: 'https://cdn.jsdelivr.net' }],
     ['script', {}, `
       (function() {
         window.addEventListener('message', function(e) {
