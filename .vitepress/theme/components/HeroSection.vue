@@ -228,11 +228,11 @@ const links = {
 }
 
 /* Stagger animation delays for hero children */
-.tb-loaded .tb-hero-logo { animation: tb-fade-up 1.0s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards; }
-.tb-loaded .tb-hero-title { animation: tb-fade-up 1.0s cubic-bezier(0.16, 1, 0.3, 1) 0.40s forwards; }
-.tb-loaded .tb-hero-subtitle { animation: tb-fade-up 1.0s cubic-bezier(0.16, 1, 0.3, 1) 0.65s forwards; }
-.tb-loaded .tb-hero .tb-install { animation: tb-fade-up 1.0s cubic-bezier(0.16, 1, 0.3, 1) 0.90s forwards; }
-.tb-loaded .tb-hero-actions { animation: tb-fade-up 1.0s cubic-bezier(0.16, 1, 0.3, 1) 1.15s forwards; }
+.tb-loaded .tb-hero-logo { animation: tb-fade-up 1.5s cubic-bezier(0.4, 0, 0.2, 1) 0.20s forwards; }
+.tb-loaded .tb-hero-title { animation: tb-fade-up 1.5s cubic-bezier(0.4, 0, 0.2, 1) 0.55s forwards; }
+.tb-loaded .tb-hero-subtitle { animation: tb-fade-up 1.5s cubic-bezier(0.4, 0, 0.2, 1) 0.90s forwards; }
+.tb-loaded .tb-hero .tb-install { animation: tb-fade-up 1.5s cubic-bezier(0.4, 0, 0.2, 1) 1.25s forwards; }
+.tb-loaded .tb-hero-actions { animation: tb-fade-up 1.5s cubic-bezier(0.4, 0, 0.2, 1) 1.50s forwards; }
 
 /* Responsive */
 @media (min-width: 640px) {

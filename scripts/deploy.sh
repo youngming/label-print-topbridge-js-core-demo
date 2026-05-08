@@ -7,7 +7,7 @@ set -euo pipefail
 #   bash scripts/deploy.sh --dry-run # 仅预检查，不部署
 #   bash scripts/deploy.sh --help    # 查看帮助
 
-PROJECT_NAME="${CF_PROJECT_NAME:-topbridge-sdk-docs}"
+PROJECT_NAME="${CF_PROJECT_NAME:-topbridge-js-sdk-docs}"
 DIST_DIR=".vitepress/dist"
 MIN_NODE_MAJOR=22
 
@@ -31,8 +31,41 @@ Cloudflare Pages 部署脚本（Direct Upload）
   --help     显示帮助
 
 环境变量：
-  CF_PROJECT_NAME  Cloudflare Pages 项目名，默认 topbridge-sdk-docs
+  CF_PROJECT_NAME  Cloudflare Pages 项目名，默认 topbridge-js-sdk-docs
 EOF
+}
+
+project_status() {
+  local target="$1"
+
+  node -e '
+const target = process.argv[1];
+let input = "";
+
+process.stdin.setEncoding("utf8");
+process.stdin.on("data", (chunk) => {
+  input += chunk;
+});
+process.stdin.on("end", () => {
+  let parsed;
+
+  try {
+    parsed = JSON.parse(input);
+  } catch (error) {
+    console.error(`无法解析 Cloudflare Pages 项目列表: ${error.message}`);
+    process.exit(2);
+  }
+
+  const projects = Array.isArray(parsed)
+    ? parsed
+    : parsed.result || parsed.projects || [];
+  const found = Array.isArray(projects) && projects.some((project) => (
+    project.name === target || project["Project Name"] === target
+  ));
+
+  console.log(found ? "found" : "missing");
+});
+' "$target"
 }
 
 DRY_RUN=false
@@ -82,6 +115,21 @@ if ! pnpm exec wrangler whoami &>/dev/null; then
 fi
 ok "wrangler 已认证"
 
+# 检查 Cloudflare Pages 项目是否存在，避免 wrangler deploy 进入交互式创建流程
+info "检查 Cloudflare Pages 项目: ${PROJECT_NAME}"
+if ! PROJECTS_JSON=$(pnpm exec wrangler pages project list --json); then
+  error "无法读取 Cloudflare Pages 项目列表。请确认 wrangler 认证状态和账号权限。"
+fi
+
+if ! PROJECT_STATUS=$(printf '%s' "$PROJECTS_JSON" | project_status "$PROJECT_NAME"); then
+  error "无法解析 Cloudflare Pages 项目列表。"
+fi
+
+if [[ "$PROJECT_STATUS" != "found" ]]; then
+  error "Cloudflare Pages 项目不存在: ${PROJECT_NAME}。请先运行: pnpm exec wrangler pages project create ${PROJECT_NAME} --production-branch=main"
+fi
+ok "Cloudflare Pages 项目存在: ${PROJECT_NAME}"
+
 # 检查当前分支
 BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 if [[ "$BRANCH" != "main" ]]; then
@@ -111,7 +159,7 @@ FILE_COUNT=$(find "$DIST_DIR" -type f | wc -l | tr -d ' ')
 ok "构建完成，输出 $FILE_COUNT 个文件到 $DIST_DIR"
 
 # ── 部署 ────────────────────────────────────────────────
-info "部署到 Cloudflare Pages (项目: $PROJECT_NAME)..."
+info "部署到 Cloudflare Pages (项目: ${PROJECT_NAME})..."
 pnpm exec wrangler pages deploy "$DIST_DIR" --project-name "$PROJECT_NAME"
 
 ok "部署完成！"
