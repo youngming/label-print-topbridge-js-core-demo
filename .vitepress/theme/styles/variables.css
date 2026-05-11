@@ -62,3 +62,23 @@
   --tb-hero-gradient-start: hsl(168, 25%, 8%);
   --tb-hero-gradient-end: hsl(220, 25%, 6%);
 }
+
+/* SDK 类型切换 — 非 JS Core 时隐藏侧边栏和文档导航 */
+[data-sdk="nextjs"] .VPSidebar,
+[data-sdk="react"] .VPSidebar {
+  display: none !important;
+}
+[data-sdk="nextjs"] .VPNavBarMenuLink[href*="/guide/"],
+[data-sdk="nextjs"] .VPNavBarMenuLink[href*="/examples/"],
+[data-sdk="nextjs"] .VPNavBarMenuLink[href*="/zh/guide/"],
+[data-sdk="nextjs"] .VPNavBarMenuLink[href*="/zh/examples/"],
+[data-sdk="react"] .VPNavBarMenuLink[href*="/guide/"],
+[data-sdk="react"] .VPNavBarMenuLink[href*="/examples/"],
+[data-sdk="react"] .VPNavBarMenuLink[href*="/zh/guide/"],
+[data-sdk="react"] .VPNavBarMenuLink[href*="/zh/examples/"] {
+  display: none !important;
+}
+[data-sdk="nextjs"] .VPNavBarMenuLink[href*="npmjs.com"],
+[data-sdk="react"] .VPNavBarMenuLink[href*="npmjs.com"] {
+  display: none !important;
+}

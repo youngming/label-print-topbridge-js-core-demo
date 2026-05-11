@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import HeroSection from './HeroSection.vue'
 import FeatureGrid from './FeatureGrid.vue'
 import AnimatedBackground from './AnimatedBackground.vue'
+import { useSdkType } from '../composables/useSdkType'
 import { useReducedMotion } from '../composables/useReducedMotion'
 
 const props = defineProps<{
@@ -11,6 +12,7 @@ const props = defineProps<{
 
 const prefersReducedMotion = useReducedMotion()
 const isLoaded = ref(false)
+const sdkType = useSdkType()
 
 const locale = props.lang || 'en'
 
@@ -30,8 +32,8 @@ onMounted(() => {
     }"
   >
     <AnimatedBackground />
-    <HeroSection :locale="locale" />
-    <FeatureGrid :locale="locale" />
+    <HeroSection :locale="locale" :sdk-type="sdkType" />
+    <FeatureGrid v-if="sdkType === 'js-core'" :locale="locale" />
   </div>
 </template>
 

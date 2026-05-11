@@ -7,7 +7,7 @@ set -euo pipefail
 #   bash scripts/deploy.sh --dry-run # 仅预检查，不部署
 #   bash scripts/deploy.sh --help    # 查看帮助
 
-PROJECT_NAME="${CF_PROJECT_NAME:-topbridge-js-sdk-docs}"
+PROJECT_NAME="${CF_PROJECT_NAME:-label-print-topbridge-sdk-demo}"
 DIST_DIR=".vitepress/dist"
 MIN_NODE_MAJOR=22
 
@@ -31,7 +31,7 @@ Cloudflare Pages 部署脚本（Direct Upload）
   --help     显示帮助
 
 环境变量：
-  CF_PROJECT_NAME  Cloudflare Pages 项目名，默认 topbridge-js-sdk-docs
+  CF_PROJECT_NAME  Cloudflare Pages 项目名，默认 label-print-topbridge-sdk-demo
 EOF
 }
 

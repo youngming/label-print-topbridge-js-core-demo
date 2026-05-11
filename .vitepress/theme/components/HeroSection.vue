@@ -1,35 +1,82 @@
 <script setup lang="ts">
 import { VPLink } from 'vitepress/theme'
+import { computed } from 'vue'
 import InstallCommand from './InstallCommand.vue'
+import type { SdkType } from '../composables/useSdkType'
 
-defineProps<{
+const props = defineProps<{
   locale: 'en' | 'zh'
+  sdkType: SdkType
 }>()
 
-const i18n = {
-  en: {
-    subtitle: 'Browser-to-Printer, One Bridge Away',
-    cta1: 'Get Started',
-    cta2: 'View on NPM',
-    cta3: 'API Reference',
+type SdkMeta = {
+  title: string
+  subtitle: string
+  installCmd?: string
+  cta1: string
+  cta1Link?: string
+  cta2?: string
+  cta2Link?: string
+  cta3?: string
+  cta3Link?: string
+}
+
+const sdkMeta: Record<SdkType, { en: SdkMeta; zh: SdkMeta }> = {
+  'js-core': {
+    en: {
+      title: 'TopBridge SDK Platform',
+      subtitle: 'Browser-to-Printer, One Bridge Away',
+      installCmd: 'npm install @appzgatenz/label-print-topbridge-js',
+      cta1: 'Get Started',
+      cta1Link: '/guide/getting-started',
+      cta2: 'View on NPM',
+      cta2Link: 'https://www.npmjs.com/package/@appzgatenz/label-print-topbridge-js',
+      cta3: 'API Reference',
+      cta3Link: '/guide/developer-guide',
+    },
+    zh: {
+      title: 'TopBridge SDK 平台',
+      subtitle: '浏览器到打印机，一座桥的距离',
+      installCmd: 'npm install @appzgatenz/label-print-topbridge-js',
+      cta1: '快速开始',
+      cta1Link: '/zh/guide/getting-started',
+      cta2: '查看 NPM',
+      cta2Link: 'https://www.npmjs.com/package/@appzgatenz/label-print-topbridge-js',
+      cta3: 'API 参考',
+      cta3Link: '/zh/guide/developer-guide',
+    },
   },
-  zh: {
-    subtitle: '浏览器到打印机，一座桥的距离',
-    cta1: '快速开始',
-    cta2: '查看 NPM',
-    cta3: 'API 参考',
+  nextjs: {
+    en: {
+      title: 'TopBridge SDK Platform',
+      subtitle: 'The Next.js SDK is on its way. Stay tuned!',
+      cta1: 'Back to JS Core',
+    },
+    zh: {
+      title: 'TopBridge SDK 平台',
+      subtitle: 'Next.js SDK 即将到来，敬请期待！',
+      cta1: '返回 JS Core',
+    },
+  },
+  react: {
+    en: {
+      title: 'TopBridge SDK Platform',
+      subtitle: 'The React SDK is on its way. Stay tuned!',
+      cta1: 'Back to JS Core',
+    },
+    zh: {
+      title: 'TopBridge SDK 平台',
+      subtitle: 'React SDK 即将到来，敬请期待！',
+      cta1: '返回 JS Core',
+    },
   },
 }
 
-const links = {
-  en: {
-    cta1: '/guide/getting-started',
-    cta3: '/guide/developer-guide',
-  },
-  zh: {
-    cta1: '/zh/guide/getting-started',
-    cta3: '/zh/guide/developer-guide',
-  },
+const meta = computed(() => sdkMeta[props.sdkType][props.locale])
+
+function backToCore() {
+  document.documentElement.dataset.sdk = 'js-core'
+  window.location.reload()
 }
 </script>
 
@@ -46,38 +93,48 @@ const links = {
         />
       </div>
 
-      <h1 class="tb-hero-title tb-animate">TopBridge JS Core SDK</h1>
+      <h1 class="tb-hero-title tb-animate">{{ meta.title }}</h1>
 
-      <p class="tb-hero-subtitle tb-animate">{{ i18n[locale].subtitle }}</p>
+      <p class="tb-hero-subtitle tb-animate">{{ meta.subtitle }}</p>
 
       <InstallCommand
+        v-if="meta.installCmd"
         class="tb-animate"
-        command="npm install @appzgatenz/label-print-topbridge-js"
+        :command="meta.installCmd"
         :locale="locale"
       />
 
-      <div class="tb-hero-actions tb-animate">
-        <VPLink :href="links[locale].cta1" class="tb-btn tb-btn--primary">
-          {{ i18n[locale].cta1 }}
+      <!-- JS Core: three CTA buttons -->
+      <div v-if="sdkType === 'js-core'" class="tb-hero-actions tb-animate">
+        <VPLink :href="meta.cta1Link!" class="tb-btn tb-btn--primary">
+          {{ meta.cta1 }}
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tb-btn-arrow"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </VPLink>
         <VPLink
-          href="https://www.npmjs.com/package/@appzgatenz/label-print-topbridge-js"
+          :href="meta.cta2Link!"
           target="_blank"
           rel="noopener noreferrer"
           no-icon
           class="tb-btn tb-btn--outline"
         >
-          {{ i18n[locale].cta2 }}
+          {{ meta.cta2 }}
         </VPLink>
-        <VPLink :href="links[locale].cta3" class="tb-btn tb-btn--text">
-          {{ i18n[locale].cta3 }}
+        <VPLink :href="meta.cta3Link!" class="tb-btn tb-btn--text">
+          {{ meta.cta3 }}
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tb-btn-arrow"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </VPLink>
       </div>
+
+      <!-- Next.js / React: single back button -->
+      <div v-else class="tb-hero-actions tb-animate">
+        <button class="tb-btn tb-btn--outline" @click="backToCore">
+          {{ meta.cta1 }}
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tb-btn-arrow"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+      </div>
     </div>
 
-    <div class="tb-scroll-indicator" aria-hidden="true">
+    <div v-if="sdkType === 'js-core'" class="tb-scroll-indicator" aria-hidden="true">
       <div class="tb-scroll-dot"></div>
     </div>
   </section>

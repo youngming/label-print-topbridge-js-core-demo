@@ -23,8 +23,8 @@ export default defineConfig({
     root: {
       label: 'English',
       lang: 'en',
-      title: 'TopBridge JS Core SDK',
-      description: 'Developer documentation and examples for @appzgatenz/label-print-topbridge-js',
+      title: 'TopBridge SDK Platform',
+      description: 'Label printing SDKs for the web — JS Core, Next.js, and React',
       themeConfig: {
         nav: [
           { text: 'Guide', link: '/guide/getting-started' },
@@ -65,8 +65,8 @@ export default defineConfig({
     zh: {
       label: '简体中文',
       lang: 'zh-CN',
-      title: 'TopBridge JS Core SDK',
-      description: '开发者文档与示例 — @appzgatenz/label-print-topbridge-js',
+      title: 'TopBridge SDK 平台',
+      description: 'Web 标签打印 SDK — JS Core、Next.js 与 React',
       link: '/zh/',
       themeConfig: {
         nav: [
@@ -109,7 +109,7 @@ export default defineConfig({
   base: '/',
   themeConfig: {
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/youngming/label-print-topbridge-js-core-demo' },
+      { icon: 'github', link: 'https://github.com/youngming/label-print-topbridge-js-SDK-demo' },
     ],
     search: {
       provider: 'local',

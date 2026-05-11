@@ -1,7 +1,7 @@
 ---
 layout: page
-title: TopBridge JS Core SDK
-description: 开发者文档与示例 — @appzgatenz/label-print-topbridge-js
+title: TopBridge SDK 平台
+description: Web 标签打印 SDK — JS Core、Next.js 与 React
 ---
 
 <HomePage lang="zh" />

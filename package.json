@@ -1,9 +1,9 @@
 {
-  "name": "label-print-topbridge-js-core-demo",
+  "name": "label-print-topbridge-sdk-demo",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Developer documentation and examples for @appzgatenz/label-print-topbridge-js SDK",
+  "description": "Documentation and examples for TopBridge label printing SDK platform",
   "scripts": {
     "dev": "vitepress dev",
     "build": "vitepress build",
